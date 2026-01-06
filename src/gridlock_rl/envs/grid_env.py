@@ -26,6 +26,7 @@ class GridEnv(gym.Env):
         self.key_reward = key_reward
         self.trap_cost = trap_cost
         self.step_cost = step_cost
+        self.total_keys = 3  # Phase 7 Fix: default 3 keys
         self.timeout_penalty = timeout_penalty
         
         self.max_steps_multiplier = max_steps_multiplier
@@ -122,7 +123,7 @@ class GridEnv(gym.Env):
                 valid_move = False
                 event = "no_op"
             elif next_tile == TileType.GOAL:
-                if self.keys_collected < 3:
+                if self.keys_collected < self.total_keys:
                     valid_move = False
                     event = "goal_locked"
         
@@ -206,7 +207,7 @@ class GridEnv(gym.Env):
         # Targets: Keys (if remaining) or Goal (if all keys collected)
         
         target_indices = []
-        if self.keys_collected < 3:
+        if self.keys_collected < self.total_keys:
             target_indices = np.argwhere(self.grid_dynamic == TileType.KEY)
         else:
             target_indices = np.argwhere(self.grid_dynamic == TileType.GOAL)
@@ -243,7 +244,7 @@ class GridEnv(gym.Env):
                              # Actually logic: if searching for keys, Goal is obstacle? 
                              # Simplification: Treat Goal as empty unless it is target.
                              # But wait, step() logic blocks locked goal.
-                             if tile == TileType.GOAL and self.keys_collected < 3:
+                             if tile == TileType.GOAL and self.keys_collected < self.total_keys:
                                  pass # treat as wall
                              else:
                                 visited.add((nr, nc))

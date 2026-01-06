@@ -33,6 +33,7 @@ src/gridlock_rl/render/pygame_render.py
 src/gridlock_rl/training/__init__.py
 src/gridlock_rl/training/curriculum.py
 src/gridlock_rl/training/eval.py
+src/gridlock_rl/training/eval_generalization.py
 src/gridlock_rl/training/metrics.py
 src/gridlock_rl/training/train.py
 src/gridlock_rl/training/train_sb3.py

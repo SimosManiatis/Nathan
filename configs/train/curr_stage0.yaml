@@ -36,3 +36,5 @@ evaluation:
   eval_freq: 20000
   n_eval_episodes: 20
   benchmark_path: "configs/maps/benchmark_seeds.yaml" # We might need a 6x6 benchmark? Or just random.
+
+  total_keys: 1 # Phase 7 Fix
