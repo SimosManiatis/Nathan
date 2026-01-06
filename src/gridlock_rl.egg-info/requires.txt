@@ -1,0 +1,10 @@
+gymnasium
+pygame
+numpy
+stable-baselines3
+pyyaml
+
+[dev]
+pytest
+black
+flake8

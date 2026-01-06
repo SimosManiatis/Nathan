@@ -1,0 +1,38 @@
+env:
+  width: 8
+  height: 8
+  max_width: 12
+  max_height: 12
+  dense_reward: true
+  trap_density: 0.10
+  max_steps_multiplier: 4
+  
+  # Tuned Rewards
+  success_reward: 20.0
+  key_reward: 2.0
+  trap_cost: 20.0
+  step_cost: 0.01
+  timeout_penalty: 10.0
+
+training:
+  algo: "PPO"
+  policy: "MultiInputPolicy"
+  total_timesteps: 2000000 
+  learning_rate: 0.0003
+  n_steps: 1024
+  batch_size: 256
+  n_epochs: 10
+  gamma: 0.99
+  gae_lambda: 0.95
+  clip_range: 0.2
+  ent_coef: 0.02
+  vf_coef: 0.5
+  max_grad_norm: 0.5
+  
+  checkpoint_freq: 100000
+  log_interval: 10
+
+evaluation:
+  eval_freq: 50000
+  n_eval_episodes: 50
+  benchmark_path: "configs/maps/benchmark_seeds.yaml"

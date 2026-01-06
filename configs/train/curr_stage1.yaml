@@ -1,0 +1,31 @@
+env:
+  width: 8
+  height: 8
+  trap_density: 0.05 # Lighter traps
+  max_steps_multiplier: 4
+
+training:
+  algo: "PPO"
+  policy: "MultiInputPolicy"
+  total_timesteps: 50000 # Short warm-up
+  learning_rate: 0.0003
+  n_steps: 2048
+  batch_size: 64
+  n_epochs: 10
+  gamma: 0.99
+  gae_lambda: 0.95
+  clip_range: 0.2
+  ent_coef: 0.02 # Slightly higher entropy for initial exploration
+  vf_coef: 0.5
+  max_grad_norm: 0.5
+  
+  checkpoint_freq: 10000
+  log_interval: 10
+
+evaluation:
+  eval_freq: 10000
+  n_eval_episodes: 20
+  # Note: benchmark maps are 8x8, this is 6x6. 
+  # Evaluating 6x6 policy on 8x8 might fail if network is size-dependent (CNN) or fixed-grid checks.
+  # But we use MLP, so it should be fine input-wise.
+  benchmark_path: "configs/maps/benchmark_seeds.yaml" 

@@ -1,0 +1,28 @@
+env:
+  width: 8
+  height: 8
+  trap_density: 0.1 # Standard difficult
+  max_steps_multiplier: 4
+
+training:
+  algo: "PPO"
+  policy: "MultiInputPolicy"
+  total_timesteps: 500000 # Longer run
+  learning_rate: 0.0003
+  n_steps: 2048
+  batch_size: 64
+  n_epochs: 10
+  gamma: 0.99
+  gae_lambda: 0.95
+  clip_range: 0.2
+  ent_coef: 0.01 # Reduce entropy as we converge
+  vf_coef: 0.5
+  max_grad_norm: 0.5
+  
+  checkpoint_freq: 50000
+  log_interval: 10
+
+evaluation:
+  eval_freq: 20000
+  n_eval_episodes: 50
+  benchmark_path: "configs/maps/benchmark_seeds.yaml"

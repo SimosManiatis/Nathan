@@ -1,0 +1,2 @@
+DEBUG: ID Config keys: ['width', 'height', 'max_width', 'max_height', 'dense_reward', 'trap_density', 'max_steps_multiplier']
+DEBUG: Final OOD Config: {'height': 10, 'trap_density': 0.15, 'width': 10, 'max_width': 12, 'max_height': 12}

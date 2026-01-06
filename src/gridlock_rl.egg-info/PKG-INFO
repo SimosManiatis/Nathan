@@ -1,0 +1,29 @@
+Metadata-Version: 2.4
+Name: gridlock-rl
+Version: 0.1.0
+Summary: RL gridworld with traps, 3 keys, and locked goal
+Requires-Python: >=3.9
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Requires-Dist: gymnasium
+Requires-Dist: pygame
+Requires-Dist: numpy
+Requires-Dist: stable-baselines3
+Requires-Dist: pyyaml
+Provides-Extra: dev
+Requires-Dist: pytest; extra == "dev"
+Requires-Dist: black; extra == "dev"
+Requires-Dist: flake8; extra == "dev"
+Dynamic: license-file
+
+# Gridlock RL
+
+RL gridworld with traps, 3 keys, and a locked goal.
+
+## Structure
+- `src/gridlock_rl`: Main package
+- `configs`: Configuration files
+- `scripts`: Utility scripts
+- `docs`: Documentation and specs
+- `tests`: Unit tests
+- `runs`: Output directory (ignored by git)

@@ -1,0 +1,24 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "gridlock-rl"
+version = "0.1.0"
+description = "RL gridworld with traps, 3 keys, and locked goal"
+readme = "README.md"
+requires-python = ">=3.9"
+dependencies = [
+    "gymnasium",
+    "pygame",
+    "numpy",
+    "stable-baselines3",
+    "pyyaml"
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest",
+    "black",
+    "flake8"
+]
