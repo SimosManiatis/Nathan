@@ -4,11 +4,13 @@ from gridlock_rl.core.constants import TileType
 from gridlock_rl.maps.validation import validate_map
 
 class MapGenerator:
-    def __init__(self, width=8, height=8, trap_density=0.1, max_retries=100):
+    def __init__(self, width=8, height=8, trap_density=0.1, max_retries=100, num_keys=3, min_traps=0):
         self.width = width
         self.height = height
         self.trap_density = trap_density
         self.max_retries = max_retries
+        self.num_keys = num_keys
+        self.min_traps = min_traps
 
     def generate(self, seed=None):
         """
@@ -37,13 +39,13 @@ class MapGenerator:
             random.shuffle(all_coords)
             
             # 2. Place Unique Items
-            # Needs: 1 Start, 1 Goal, 3 Keys
-            if len(all_coords) < 5:
+            # Needs: 1 Start, 1 Goal, N Keys
+            if len(all_coords) < 2 + self.num_keys:
                 raise ValueError("Grid too small")
                 
             start_pos = all_coords.pop()
             goal_pos = all_coords.pop()
-            key_positions = [all_coords.pop() for _ in range(3)]
+            key_positions = [all_coords.pop() for _ in range(self.num_keys)]
             
             grid[start_pos] = TileType.START
             grid[goal_pos] = TileType.GOAL
@@ -53,7 +55,8 @@ class MapGenerator:
             # 3. Place Traps
             # Remaining empty cells
             remaining = all_coords # already shuffled and popped
-            n_traps = int(len(remaining) * self.trap_density)
+            n_traps_density = int(len(remaining) * self.trap_density)
+            n_traps = max(self.min_traps, n_traps_density)
             
             for _ in range(n_traps):
                 if not remaining: break

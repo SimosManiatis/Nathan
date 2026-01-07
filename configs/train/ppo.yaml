@@ -3,21 +3,27 @@
 env:
   width: 8
   height: 8
-  trap_density: 0.1
-  max_steps_multiplier: 4 # 4 * W * H
+  trap_density: [0.03, 0.05] # Stage 2C: No safe maps
+  max_steps_multiplier: 4 
+  num_keys: 3
+  dense_reward: true
+  step_cost: 0.02
+  timeout_penalty: 10.0
+  success_reward: 20.0 # Reverted to standard
+  min_traps: 1 # Force at least one trap
 
 training:
   algo: "PPO"
-  policy: "MultiInputPolicy" # Required for Dict observation
-  total_timesteps: 100000
-  learning_rate: 0.0003
-  n_steps: 2048
+  policy: "MultiInputPolicy"
+  total_timesteps: 2000000 # 2M steps needed for tough task
+  learning_rate: 0.0001
+  n_steps: 4096 # Increased horizon for 8x8 exploration
   batch_size: 64
   n_epochs: 10
   gamma: 0.99
   gae_lambda: 0.95
   clip_range: 0.2
-  ent_coef: 0.01
+  ent_coef: 0.01 # Low entropy to reduce trap noise
   vf_coef: 0.5
   max_grad_norm: 0.5
   

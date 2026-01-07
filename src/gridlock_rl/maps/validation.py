@@ -75,13 +75,13 @@ def validate_map(grid):
     goal_pos = tuple(map(int, np.argwhere(grid == TileType.GOAL)[0]))
     key_positions = [tuple(map(int, p)) for p in np.argwhere(grid == TileType.KEY)]
     
-    if len(key_positions) != 3:
-        return False, "Incorrect number of keys"
+    if len(key_positions) == 0:
+        return False, "No keys found"
 
     # 2. Reachability: Start -> All Keys
     reached_keys = is_reachable(grid, start_pos, set(key_positions))
-    if len(reached_keys) != 3:
-        return False, "Not all keys reachable from Start"
+    if len(reached_keys) != len(key_positions):
+        return False, f"Not all keys reachable from Start ({len(reached_keys)}/{len(key_positions)})"
         
     # 3. Reachability: Any reachable key -> Goal
     # Since we verified all keys are reachable from Start, they are in the same component.

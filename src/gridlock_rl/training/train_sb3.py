@@ -7,10 +7,13 @@ from stable_baselines3.common.callbacks import CheckpointCallback, EvalCallback
 from stable_baselines3.common.vec_env import SubprocVecEnv, DummyVecEnv, VecMonitor
 
 from gridlock_rl.envs.grid_env import GridEnv
+from gridlock_rl.envs.wrappers import MetricLoggingWrapper
+from gridlock_rl.callbacks.metrics_callback import MetricsCallback
 
 def make_env(**kwargs):
     def _init():
         env = GridEnv(**kwargs)
+        env = MetricLoggingWrapper(env)
         return env
     return _init
 
@@ -61,6 +64,8 @@ def train(config_path, run_name="default", load_model_path=None):
         name_prefix="ppo_gridlock"
     )
     
+    metrics_callback = MetricsCallback()
+
     eval_callback = EvalCallback(
         eval_env,
         best_model_save_path=os.path.join(base_dir, "best_model"),
@@ -121,7 +126,7 @@ def train(config_path, run_name="default", load_model_path=None):
     print(f"Starting training: {run_name}")
     model.learn(
         total_timesteps=train_cfg["total_timesteps"],
-        callback=[checkpoint_callback, eval_callback],
+        callback=[checkpoint_callback, eval_callback, metrics_callback],
         reset_num_timesteps=False if load_model_path else True
     )
     

@@ -12,7 +12,7 @@ class GridEnv(gym.Env):
     def __init__(self, render_mode=None, width=8, height=8, trap_density=0.1, 
                  max_width=None, max_height=None, dense_reward=False, 
                  success_reward=20.0, key_reward=2.0, trap_cost=20.0, step_cost=0.01, timeout_penalty=10.0,
-                 max_steps_multiplier=4):
+                 max_steps_multiplier=4, num_keys=3, min_traps=0):
         super().__init__()
         self.width = width
         self.height = height
@@ -26,12 +26,21 @@ class GridEnv(gym.Env):
         self.key_reward = key_reward
         self.trap_cost = trap_cost
         self.step_cost = step_cost
-        self.total_keys = 3  # Phase 7 Fix: default 3 keys
+        # Keys will be counted in reset()
+        self.total_keys = 0 
         self.timeout_penalty = timeout_penalty
         
         self.max_steps_multiplier = max_steps_multiplier
         
-        self.map_generator = MapGenerator(width=width, height=height, trap_density=trap_density)
+        # Helper to parse range
+        self.trap_density_range = None
+        if isinstance(trap_density, (list, tuple)):
+            self.trap_density_range = trap_density
+            self.trap_density = trap_density[1] # Default to max for sizing? Or doesn't matter.
+        else:
+            self.trap_density = trap_density
+            
+        self.map_generator = MapGenerator(width=width, height=height, trap_density=self.trap_density, num_keys=num_keys, min_traps=min_traps)
 
         # Action Space: 4 discrete actions (Up, Right, Down, Left)
         self.action_space = spaces.Discrete(len(Action))
@@ -75,10 +84,20 @@ class GridEnv(gym.Env):
             # MapGenerator uses global np.random or specific seed.
             # We can pass a seed derived from self.np_random
             gen_seed = int(self.np_random.integers(0, 2**32))
+            
+            # Curriculum: Trap Density Randomization
+            if self.trap_density_range:
+                low, high = self.trap_density_range
+                new_density = self.np_random.uniform(low, high)
+                self.map_generator.trap_density = new_density
+                
             self.grid_static, _ = self.map_generator.generate(seed=gen_seed)
 
         # 2. State Initialization
         self.grid_dynamic = self.grid_static.copy()
+        
+        # Count total keys in the generated map
+        self.total_keys = np.count_nonzero(self.grid_static == TileType.KEY)
         
         # Locate agent
         start_indices = np.argwhere(self.grid_static == TileType.START)
@@ -87,15 +106,23 @@ class GridEnv(gym.Env):
         self.agent_pos = tuple(start_indices[0])
         
         self.keys_collected = 0
-        self.keys_collected = 0
         self.steps = 0
-        self.last_potential = self._compute_potential() if self.use_dense_reward else 0.0
+        if self.use_dense_reward:
+             self.last_potential, self.last_target = self._compute_potential()
+        else:
+             self.last_potential = 0.0
+             self.last_target = None
+        
+        self.last_shaping_reward = 0.0
+        self.last_extrinsic_reward = 0.0
         
         return self._get_obs(), self._get_info(event="reset")
 
     def step(self, action):
         self.steps += 1
         reward = -self.step_cost # Step penalty
+        extrinsic_reward = -self.step_cost
+        shaping_reward = 0.0
         terminated = False
         truncated = False
         event = "moved"
@@ -133,11 +160,13 @@ class GridEnv(gym.Env):
             # 3. Interactions
             if next_tile == TileType.TRAP:
                 reward = -self.trap_cost
+                extrinsic_reward += -self.trap_cost
                 terminated = True
                 event = "trap"
             
             elif next_tile == TileType.KEY:
                 reward = self.key_reward
+                extrinsic_reward += self.key_reward
                 self.keys_collected += 1
                 # Remove key from dynamic grid
                 self.grid_dynamic[nr, nc] = TileType.EMPTY
@@ -146,26 +175,47 @@ class GridEnv(gym.Env):
             elif next_tile == TileType.GOAL:
                 # Can only enter if unlocked (checked above)
                 reward = self.success_reward
+                extrinsic_reward += self.success_reward
                 terminated = True
                 event = "success"
 
         # 3.5 Dense Reward Shaping
+        # 3.5 Dense Reward Shaping
         if self.use_dense_reward and not terminated:
-            current_potential = self._compute_potential()
+            current_potential, current_target = self._compute_potential()
+            
+            # Target Switch Penalty Fix:
+            # 1. If key collected, potential changes drastically -> Reset
+            # 2. If target Identity changes (switching targets), potential surface changes -> Reset
+            
+            target_switched = (current_target != self.last_target)
+            
+            if event == "key_collected" or target_switched:
+                self.last_potential = current_potential
+                self.last_target = current_target
+
             shaping = current_potential - self.last_potential
+            shaping_reward = shaping
             reward += shaping
             self.last_potential = current_potential
+            self.last_target = current_target
 
+        # 4. Truncation
         # 4. Truncation
         if self.steps >= self.max_steps:
             truncated = True
             if not terminated:
                 reward -= self.timeout_penalty
+                extrinsic_reward -= self.timeout_penalty
                 event = "timeout"
 
         # 5. Render
         if self.render_mode == "human":
             self.render()
+        
+        # Store for Info
+        self.last_shaping_reward = shaping_reward
+        self.last_extrinsic_reward = extrinsic_reward
             
         return self._get_obs(), reward, terminated, truncated, self._get_info(event)
 
@@ -199,7 +249,10 @@ class GridEnv(gym.Env):
         return {
             "event": event,
             "keys_collected": self.keys_collected,
-            "steps": self.steps
+            "steps": self.steps,
+            "total_keys": self.total_keys,
+            "shaping_reward": getattr(self, "last_shaping_reward", 0.0),
+            "extrinsic_reward": getattr(self, "last_extrinsic_reward", 0.0)
         }
 
     def _compute_potential(self):
@@ -213,9 +266,19 @@ class GridEnv(gym.Env):
             target_indices = np.argwhere(self.grid_dynamic == TileType.GOAL)
             
         if len(target_indices) == 0:
-            return 0.0
+            return 0.0, None
             
-        targets = [tuple(t) for t in target_indices]
+        agent_r, agent_c = self.agent_pos
+        
+        # Manhattan distance to all targets
+        dists = np.abs(target_indices[:, 0] - agent_r) + np.abs(target_indices[:, 1] - agent_c)
+        min_idx = np.argmin(dists)
+        min_dist = dists[min_idx]
+        nearest_target = tuple(target_indices[min_idx])
+        
+        # Normalized potential (max_dist approx W+H)
+        # We want it to be -dist.
+        return -float(min_dist), nearest_target
         
         # Simple BFS to find shortest path to ANY target
         # Treating Walls as blocking, Traps as blocking (safe path)
