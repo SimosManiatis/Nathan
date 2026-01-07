@@ -1,6 +1,10 @@
-# Gridlock RL
+# Gridlock RL: Training "Nathan"
 
-**Gridlock RL** is a reinforcement learning research project focused on training robust agents to solve procedural navigation puzzles. The agent must navigate a grid world, collect a set number of keys (multi-objective), avoiding procedurally placed traps (safety constraints), and reach a goal state.
+**Gridlock RL** is a research initiative focused on the development of **[Nathan](NATHAN_PROFILE.md)**, an autonomous AI agent designed to evolve into an intelligent Non-Player Character (NPC).
+
+Currently undergoing the "Gridlock Protocol", Nathan is learning to navigate procedurally generated hazard zones, demonstrating advanced spatial reasoning and survival instincts. This repository documents his training architecture, curriculum progress, and the underlying PPO implementation.
+
+> ** Meet the Agent**: Read Nathan's full biography and roadmap in **[NATHAN_PROFILE.md](NATHAN_PROFILE.md)**.
 
 The project demonstrates advanced RL techniques including **Curriculum Learning**, **Dense Reward Shaping** (with potential-based guarantees), and **Vectorized Training** using Stable Baselines 3 (PPO).
 
